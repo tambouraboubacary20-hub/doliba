@@ -83,6 +83,11 @@ if (isModEnabled('accounting')) {
 
 // Load translation files required by the page
 $langs->loadLangs(array('bills', 'companies', 'compta', 'products', 'banks', 'main', 'withdrawals'));
+// Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
+$whatsappdocenabled = isModEnabled('whatsappdoc') || getDolGlobalString('MAIN_MODULE_WHATSAPPDOC');
+if ($whatsappdocenabled) {
+        $langs->load('whatsappdoc@whatsappdoc');
+}
 if (isModEnabled('incoterm')) {
 	$langs->load('incoterm');
 }
@@ -3543,14 +3548,20 @@ if (empty($reshook)) {
 		$object->getSumDepositsUsed(-1);
 	}
 	$triggersendname = 'BILL_SENTBYMAIL';
-	$paramname = 'id';
-	$autocopy = 'MAIN_MAIL_AUTOCOPY_INVOICE_TO';
-	$trackid = 'inv'.$object->id;
-	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
+        $paramname = 'id';
+        $autocopy = 'MAIN_MAIL_AUTOCOPY_INVOICE_TO';
+        $trackid = 'inv'.$object->id;
+        include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 
-	// Actions to build doc
-	$upload_dir = $conf->invoice->multidir_output[!empty($object->entity) ? $object->entity : $conf->entity];
-	$permissiontoadd = $usercancreate;
+        if ($whatsappdocenabled) {
+                $actiontypecode = 'AC_OTH_AUTO';
+                $triggersendname = 'BILL_SENTBYWHATSAPP';
+                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php';
+        }
+
+        // Actions to build doc
+        $upload_dir = $conf->invoice->multidir_output[!empty($object->entity) ? $object->entity : $conf->entity];
+        $permissiontoadd = $usercancreate;
 	include DOL_DOCUMENT_ROOT.'/core/actions_builddoc.inc.php';
 
 
@@ -6602,18 +6613,21 @@ if ($action == 'create') {
 			// Send by mail
 			if (empty($user->socid)) {
 				if (($object->status == Facture::STATUS_VALIDATED || $object->status == Facture::STATUS_CLOSED) || getDolGlobalString('FACTURE_SENDBYEMAIL_FOR_ALL_STATUS')) {
-					if ($objectidnext) {
-						$params['attr']['title'] = $langs->trans("DisabledBecauseReplacedInvoice");
-						print dolGetButtonAction('', $langs->trans('SendMail'), 'email', '#', '', false, $params);
-					} else {
-						if ($usercansend) {
-							unset($params['attr']['title']);
-							print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER['PHP_SELF'].'?facid='.$object->id.'&action=presend&mode=init#formmailbeforetitle', '', true, $params);
-						} else {
-							unset($params['attr']['title']);
-							print dolGetButtonAction('', $langs->trans('SendMail'), 'email', '#', '', false, $params);
-						}
-					}
+                                                if ($objectidnext) {
+                                                        $params['attr']['title'] = $langs->trans("DisabledBecauseReplacedInvoice");
+                                                        print dolGetButtonAction('', $langs->trans('SendMail'), 'email', '#', '', false, $params);
+                                                } else {
+                                                        if ($usercansend) {
+                                                                unset($params['attr']['title']);
+                                                                print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER['PHP_SELF'].'?facid='.$object->id.'&action=presend&mode=init#formmailbeforetitle', '', true, $params);
+                                                                if ($whatsappdocenabled) {
+                                                                        print dolGetButtonAction('', $langs->trans('SendWhatsapp'), 'default', $_SERVER['PHP_SELF'].'?facid='.$object->id.'&action=presendwhatsapp#formmailbeforetitle', '', true, $params);
+                                                                }
+                                                        } else {
+                                                                unset($params['attr']['title']);
+                                                                print dolGetButtonAction('', $langs->trans('SendMail'), 'email', '#', '', false, $params);
+                                                        }
+                                                }
 				}
 			}
 
@@ -6917,10 +6931,14 @@ if ($action == 'create') {
 	// Presend form
 	$modelmail = 'facture_send';
 	$defaulttopic = 'SendBillRef';
-	$diroutput = $conf->invoice->multidir_output[$object->entity ?? $conf->entity];
-	$trackid = 'inv'.$object->id;
+        $diroutput = $conf->invoice->multidir_output[$object->entity ?? $conf->entity];
+        $trackid = 'inv'.$object->id;
 
-	include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
+        include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
+        if ($whatsappdocenabled) {
+                $diroutput = $conf->invoice->multidir_output[$object->entity ?? $conf->entity];
+                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php';
+        }
 }
 
 // End of page

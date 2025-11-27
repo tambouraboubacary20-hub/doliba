@@ -78,6 +78,11 @@ if (isModEnabled('variants')) {
 
 // Load translation files required by the page
 $langs->loadLangs(array('orders', 'sendings', 'companies', 'bills', 'propal', 'products', 'other'));
+// Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
+$whatsappdocenabled = isModEnabled('whatsappdoc') || getDolGlobalString('MAIN_MODULE_WHATSAPPDOC');
+if ($whatsappdocenabled) {
+        $langs->load('whatsappdoc@whatsappdoc');
+}
 
 if (isModEnabled('incoterm')) {
 	$langs->load('incoterm');
@@ -2036,10 +2041,16 @@ if (empty($reshook)) {
 
 	// Actions to send emails
 	$triggersendname = 'ORDER_SENTBYMAIL';
-	$paramname = 'id';
-	$autocopy = 'MAIN_MAIL_AUTOCOPY_ORDER_TO'; // used to know the automatic BCC to add
-	$trackid = 'ord' . $object->id;
-	include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+        $paramname = 'id';
+        $autocopy = 'MAIN_MAIL_AUTOCOPY_ORDER_TO'; // used to know the automatic BCC to add
+        $trackid = 'ord' . $object->id;
+        include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+
+        if ($whatsappdocenabled) {
+                $actiontypecode = 'AC_OTH_AUTO';
+                $triggersendname = 'ORDER_SENTBYWHATSAPP';
+                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php';
+        }
 
 
 	if (!$error && getDolGlobalString('MAIN_DISABLE_CONTACTS_TAB') && $usercancreate) {
@@ -3439,15 +3450,18 @@ if ($action == 'create' && $usercancreate) {
 				}
 
 				// Send
-				if (empty($user->socid)) {
-					if ($object->status > Commande::STATUS_DRAFT || getDolGlobalString('COMMANDE_SENDBYEMAIL_FOR_ALL_STATUS')) {
-						if ($usercansend) {
-							print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER["PHP_SELF"] . '?action=presend&token=' . newToken() . '&id=' . $object->id . '&mode=init#formmailbeforetitle', '');
-						} else {
-							print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER['PHP_SELF'] . '#', '', false);
-						}
-					}
-				}
+                                if (empty($user->socid)) {
+                                        if ($object->status > Commande::STATUS_DRAFT || getDolGlobalString('COMMANDE_SENDBYEMAIL_FOR_ALL_STATUS')) {
+                                                if ($usercansend) {
+                                                        print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER["PHP_SELF"] . '?action=presend&token=' . newToken() . '&id=' . $object->id . '&mode=init#formmailbeforetitle', '');
+                                                        if ($whatsappdocenabled) {
+                                                                print dolGetButtonAction('', $langs->trans('SendWhatsapp'), 'default', $_SERVER["PHP_SELF"] . '?action=presendwhatsapp&token=' . newToken() . '&id=' . $object->id . '#formmailbeforetitle', '');
+                                                        }
+                                                } else {
+                                                        print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER['PHP_SELF'] . '#', '', false);
+                                                }
+                                        }
+                                }
 
 				// Subtotal
 				if ($object->status == Commande::STATUS_DRAFT && isModEnabled('subtotals') && getDolGlobalString('SUBTOTAL_TITLE_' . strtoupper($object->element))) {
@@ -3700,11 +3714,15 @@ if ($action == 'create' && $usercancreate) {
 		// Presend form
 		$modelmail = 'order_send';
 		$defaulttopic = 'SendOrderRef';
-		$diroutput = getMultidirOutput($object);
-		$trackid = 'ord' . $object->id;
+                $diroutput = getMultidirOutput($object);
+                $trackid = 'ord' . $object->id;
 
-		include DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
-	}
+                include DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
+                if ($whatsappdocenabled) {
+                        $diroutput = getMultidirOutput($object);
+                        include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php';
+                }
+        }
 }
 
 // End of page

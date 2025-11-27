@@ -75,6 +75,11 @@ if (isModEnabled('variants')) {
 
 // Load translation files required by the page
 $langs->loadLangs(array('companies', 'propal', 'compta', 'bills', 'orders', 'products', 'sendings', 'other'));
+// Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
+$whatsappdocenabled = isModEnabled('whatsappdoc') || getDolGlobalString('MAIN_MODULE_WHATSAPPDOC');
+if ($whatsappdocenabled) {
+        $langs->load('whatsappdoc@whatsappdoc');
+}
 if (isModEnabled('incoterm')) {
 	$langs->load('incoterm');
 }
@@ -1002,14 +1007,20 @@ if (empty($reshook)) {
 		$object->updateSubtotalLineBlockLines($langs, $object->getRangOfLine($lineid), 'discount', $discount);
 	}
 
-	include DOL_DOCUMENT_ROOT . '/core/actions_printing.inc.php';
+        include DOL_DOCUMENT_ROOT . '/core/actions_printing.inc.php';
 
-	// Actions to send emails
-	$actiontypecode = 'AC_OTH_AUTO';
-	$triggersendname = 'PROPAL_SENTBYMAIL';
-	$autocopy = 'MAIN_MAIL_AUTOCOPY_PROPOSAL_TO';
-	$trackid = 'pro' . $object->id;
-	include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+        // Actions to send emails
+        $actiontypecode = 'AC_OTH_AUTO';
+        $triggersendname = 'PROPAL_SENTBYMAIL';
+        $autocopy = 'MAIN_MAIL_AUTOCOPY_PROPOSAL_TO';
+        $trackid = 'pro' . $object->id;
+        include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+
+        if ($whatsappdocenabled) {
+                $actiontypecode = 'AC_OTH_AUTO';
+                $triggersendname = 'PROPAL_SENTBYWHATSAPP';
+                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php';
+        }
 
 
 	// Go back to draft
@@ -3576,11 +3587,14 @@ if ($action == 'create') {
 				}
 
 				// Send
-				if (empty($user->socid)) {
-					if ($object->status == Propal::STATUS_VALIDATED || $object->status == Propal::STATUS_SIGNED || getDolGlobalString('PROPOSAL_SENDBYEMAIL_FOR_ALL_STATUS')) {
-						print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER["PHP_SELF"] . '?action=presend&token=' . newToken() . '&id=' . $object->id . '&mode=init#formmailbeforetitle', '', $usercansend);
-					}
-				}
+                                if (empty($user->socid)) {
+                                        if ($object->status == Propal::STATUS_VALIDATED || $object->status == Propal::STATUS_SIGNED || getDolGlobalString('PROPOSAL_SENDBYEMAIL_FOR_ALL_STATUS')) {
+                                                print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER["PHP_SELF"] . '?action=presend&token=' . newToken() . '&id=' . $object->id . '&mode=init#formmailbeforetitle', '', $usercansend);
+                                                if ($whatsappdocenabled) {
+                                                        print dolGetButtonAction('', $langs->trans('SendWhatsapp'), 'default', $_SERVER["PHP_SELF"] . '?action=presendwhatsapp&token=' . newToken() . '&id=' . $object->id . '#formmailbeforetitle', '', $usercansend);
+                                                }
+                                        }
+                                }
 
 				$arrayforbutaction = array();
 
@@ -3778,12 +3792,17 @@ if ($action == 'create') {
 	}
 
 	// Presend form
-	$modelmail = 'propal_send';
-	$defaulttopic = 'SendPropalRef';
-	$diroutput = $conf->propal->multidir_output[$object->entity ?? $conf->entity];
-	$trackid = 'pro' . $object->id;
+        $modelmail = 'propal_send';
+        $defaulttopic = 'SendPropalRef';
+        $diroutput = $conf->propal->multidir_output[$object->entity ?? $conf->entity];
+        $trackid = 'pro' . $object->id;
 
-	include DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
+        include DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
+
+        if ($whatsappdocenabled) {
+                $diroutput = $conf->propal->multidir_output[$object->entity ?? $conf->entity];
+                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php';
+        }
 }
 
 // End of page

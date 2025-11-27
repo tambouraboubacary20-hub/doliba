@@ -1,0 +1,7 @@
+SendWhatsapp=Envoyer par WhatsApp
+WhatsappPhone=Numéro WhatsApp
+WhatsappMessage=Message WhatsApp
+WhatsappDefaultMessage=Message WhatsApp
+WhatsappDefaultBody=Bonjour, veuillez trouver votre document %s : %s
+ErrorWhatsappPhoneRequired=Veuillez renseigner un numéro WhatsApp avant l'envoi.
+WhatsappdocDescription=Ajoute l'envoi WhatsApp pour les documents commerciaux.
