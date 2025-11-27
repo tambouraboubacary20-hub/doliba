@@ -1,0 +1,7 @@
+SendWhatsapp=Send by WhatsApp
+WhatsappPhone=WhatsApp number
+WhatsappMessage=WhatsApp message
+WhatsappDefaultMessage=WhatsApp message
+WhatsappDefaultBody=Hello, please find your document %s: %s
+ErrorWhatsappPhoneRequired=Please provide a WhatsApp number before sending.
+WhatsappdocDescription=Adds WhatsApp sharing for commercial documents.
