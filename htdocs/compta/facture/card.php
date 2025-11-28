@@ -84,7 +84,7 @@ if (isModEnabled('accounting')) {
 // Load translation files required by the page
 $langs->loadLangs(array('bills', 'companies', 'compta', 'products', 'banks', 'main', 'withdrawals'));
 // Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
-$whatsappdocenabled = isModEnabled('whatsappdoc') || getDolGlobalString('MAIN_MODULE_WHATSAPPDOC');
+$whatsappdocenabled = (bool) (getDolGlobalString('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
 if ($whatsappdocenabled) {
         $langs->load('whatsappdoc@whatsappdoc');
 }
@@ -3556,7 +3556,7 @@ if (empty($reshook)) {
         if ($whatsappdocenabled) {
                 $actiontypecode = 'AC_OTH_AUTO';
                 $triggersendname = 'BILL_SENTBYWHATSAPP';
-                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php';
+                dol_include_once('/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php');
         }
 
         // Actions to build doc
@@ -6937,7 +6937,7 @@ if ($action == 'create') {
         include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
         if ($whatsappdocenabled) {
                 $diroutput = $conf->invoice->multidir_output[$object->entity ?? $conf->entity];
-                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php';
+                dol_include_once('/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php');
         }
 }
 
