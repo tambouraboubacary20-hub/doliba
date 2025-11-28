@@ -66,7 +66,7 @@ class modWhatsappdoc extends DolibarrModules
         $this->config_page_url = array();
 
         $this->hidden = 0;
-        $this->depends = array('modSocialNetworks');
+        $this->depends = array('socialnetworks');
         $this->requiredby = array();
         $this->conflictwith = array();
 

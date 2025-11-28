@@ -83,7 +83,9 @@ if (isModEnabled('accounting')) {
 
 // Load translation files required by the page
 $langs->loadLangs(array('bills', 'companies', 'compta', 'products', 'banks', 'main', 'withdrawals'));
-if (isModEnabled('whatsappdoc')) {
+// Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
+$whatsappdocenabled = (bool) (getDolGlobalBool('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
+if ($whatsappdocenabled) {
         $langs->load('whatsappdoc@whatsappdoc');
 }
 if (isModEnabled('incoterm')) {
@@ -3551,10 +3553,10 @@ if (empty($reshook)) {
         $trackid = 'inv'.$object->id;
         include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 
-        if (isModEnabled('whatsappdoc')) {
+        if ($whatsappdocenabled) {
                 $actiontypecode = 'AC_OTH_AUTO';
                 $triggersendname = 'BILL_SENTBYWHATSAPP';
-                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php';
+                dol_include_once('/custom/whatsappdoc/core/actions/actions_sendwhatsapp.inc.php');
         }
 
         // Actions to build doc
@@ -6618,7 +6620,7 @@ if ($action == 'create') {
                                                         if ($usercansend) {
                                                                 unset($params['attr']['title']);
                                                                 print dolGetButtonAction('', $langs->trans('SendMail'), 'email', $_SERVER['PHP_SELF'].'?facid='.$object->id.'&action=presend&mode=init#formmailbeforetitle', '', true, $params);
-                                                                if (isModEnabled('whatsappdoc')) {
+                                                                if ($whatsappdocenabled) {
                                                                         print dolGetButtonAction('', $langs->trans('SendWhatsapp'), 'default', $_SERVER['PHP_SELF'].'?facid='.$object->id.'&action=presendwhatsapp#formmailbeforetitle', '', true, $params);
                                                                 }
                                                         } else {
@@ -6933,9 +6935,9 @@ if ($action == 'create') {
         $trackid = 'inv'.$object->id;
 
         include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
-        if (isModEnabled('whatsappdoc')) {
+        if ($whatsappdocenabled) {
                 $diroutput = $conf->invoice->multidir_output[$object->entity ?? $conf->entity];
-                include DOL_DOCUMENT_ROOT . '/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php';
+                dol_include_once('/custom/whatsappdoc/core/tpl/card_presend_whatsapp.tpl.php');
         }
 }
 
