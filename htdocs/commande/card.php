@@ -79,7 +79,7 @@ if (isModEnabled('variants')) {
 // Load translation files required by the page
 $langs->loadLangs(array('orders', 'sendings', 'companies', 'bills', 'propal', 'products', 'other'));
 // Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
-$whatsappdocenabled = (bool) (getDolGlobalString('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
+$whatsappdocenabled = (bool) (getDolGlobalBool('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
 if ($whatsappdocenabled) {
         $langs->load('whatsappdoc@whatsappdoc');
 }

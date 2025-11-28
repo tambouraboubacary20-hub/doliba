@@ -84,7 +84,7 @@ if (isModEnabled('accounting')) {
 // Load translation files required by the page
 $langs->loadLangs(array('bills', 'companies', 'compta', 'products', 'banks', 'main', 'withdrawals'));
 // Whatsappdoc module detection (fallback on global constant if conf->modules is not populated)
-$whatsappdocenabled = (bool) (getDolGlobalString('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
+$whatsappdocenabled = (bool) (getDolGlobalBool('MAIN_MODULE_WHATSAPPDOC') || isModEnabled('whatsappdoc'));
 if ($whatsappdocenabled) {
         $langs->load('whatsappdoc@whatsappdoc');
 }
